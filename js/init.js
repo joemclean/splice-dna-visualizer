@@ -27,12 +27,13 @@ for( var i=0; i<songData.tracks.length; i++) {
   console.log(songData.tracks[i].name);
 
   var material = new THREE.MeshBasicMaterial( { color: colors[i % 5] } );
+  zPosition = (Math.random()*20);
 
   for( var j=0; j<clips.length; j++ ) {
     var clipObject = clips[j];
-    var geometry = new THREE.BoxGeometry( (clipObject.end - clipObject.start), 2, 1 );
+    var geometry = new THREE.BoxGeometry( (clipObject.end - clipObject.start), 2, 2 );
     var clipMesh = new THREE.Mesh( geometry, material );
-    clipMesh.position.set( (xOffset + clipObject.start*1.3 ) , yOffset + trackHeight, 0);
+    clipMesh.position.set( (xOffset + clipObject.start*1.3 ) , yOffset + trackHeight, zPosition );
     scene.add( clipMesh );
   }
 }
