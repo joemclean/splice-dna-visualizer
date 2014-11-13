@@ -2,11 +2,33 @@
   <head>
     <title>My first Three.js app</title>
     <style>
-      body { margin: 0; }
+      body { 
+        margin: 0; 
+        color: #ffffff;
+        position: relative;
+        font-family: Helvetica, Arial, sans-serif;
+        background-color: #000;
+      }
+      .overlay {
+        position: absolute;
+        margin: 0px;
+        padding: 20px;
+        background-color: rgba(0,0,0,0.5);
+      }
+
+      .overlay a {
+        color: #497ed6;
+      }
       canvas { width: 100%; height: 100% }
     </style>
   </head>
   <body>
+    <div class="overlay">
+      <h1>
+        Henry Fong and J-Trick - Scream
+      </h1>
+      Visualizer Protoype | <a href="https://github.com/joemclean/splice-dna-visualizer">Github page</a>
+    </div>
     <script src="js/three.min.js"></script>
     <script src="js/orbitcontrols.js"></script>
     <script src="js/songdata.js"></script>
