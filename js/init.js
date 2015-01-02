@@ -30,21 +30,26 @@ for( var i=0; i<songData.tracks.length; i++) {
   console.log(songData.tracks[i].name);
 
   var material = new THREE.MeshBasicMaterial( { color: colors[i % 5] } );
-  //zPosition = (Math.random()*20);
+  radiusOffset = (Math.random()*10);
 
   for( var j=0; j<clips.length; j++ ) {
     var clipObject = clips[j];
-    var geometry = new THREE.BoxGeometry( (clipObject.end - clipObject.start), 2, 2 );
-    var clipMesh = new THREE.Mesh( geometry, material );
 
-    var yPosition = (Math.sin(rotationAngle * i)) * circleRadius;
-    var zPosition = (Math.cos(rotationAngle * i)) * circleRadius;
+    var clipLength = clipObject.end - clipObject.start;
+    
+    for( var k=0; k<clipLength; k++ ) {
+      //var geometry = new THREE.BoxGeometry( 1,2,2 );
+      var geometry = new THREE.SphereGeometry( 1, 15, 15 );
+      var clipMesh = new THREE.Mesh( geometry, material );
 
-    clipMesh.position.set( xOffset + clipObject.start*1.3 , yPosition, zPosition );
-    clipMesh.rotation.x = rotationAngle *  -i;
+      var yPosition = Math.sin((rotationAngle * i) + (clipObject.start + k)/20) * (circleRadius + radiusOffset);
+      var zPosition = Math.cos((rotationAngle * i) + (clipObject.start + k)/20) * (circleRadius + radiusOffset);
+      
+      clipMesh.position.set( xOffset + (clipObject.start + k) * 1.3 , yPosition, zPosition );
+      clipMesh.rotation.x = rotationAngle *  -i;
 
-    scene.add( clipMesh );
-
+      scene.add( clipMesh );
+    }
   }
 }
 
