@@ -24,7 +24,7 @@ var darkColors = [
 
 var material = new THREE.MeshBasicMaterial( { color: colors[0] } );
 
-var xOffset = -1 * (songData.duration / 2);
+var xOffset = -1 * (songData.duration * 1.3 / 2);
 var yOffset = -1 * ((songData.tracks.length * 2.2) / 2);
 
 var rotationAngle = ((Math.PI*2)/songData.tracks.length);
