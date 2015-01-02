@@ -39,7 +39,7 @@ for( var i=0; i<songData.tracks.length; i++) {
     
     for( var k=0; k<clipLength; k++ ) {
       //var geometry = new THREE.BoxGeometry( 1,2,2 );
-      var geometry = new THREE.SphereGeometry( 1, 15, 15 );
+      var geometry = new THREE.SphereGeometry( 0.7, 8, 8 );
       var clipMesh = new THREE.Mesh( geometry, material );
 
       var yPosition = Math.sin((rotationAngle * i) + (clipObject.start + k)/20) * (circleRadius + radiusOffset);
