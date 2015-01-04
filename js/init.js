@@ -1,14 +1,14 @@
 var scene = new THREE.Scene();
-var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
+var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 4000 );
 
 var renderer = new THREE.WebGLRenderer();
 renderer.setSize( window.innerWidth, window.innerHeight );
 document.body.appendChild( renderer.domElement );
 
-camera.position.z = 60;
+camera.position.z = 120;
 controls = new THREE.OrbitControls( camera, renderer.domElement );
 
-var colors = [
+var dnaColors = [
   0x3f3854,
   0x25b79b,
   0x497ed6,
@@ -16,59 +16,63 @@ var colors = [
   0x15ba31
 ];
 
-var darkColors = [
+var waveformColors = [
   0x202020,
   0x242424,
   0x262626
 ];
 
-var material = new THREE.MeshBasicMaterial( { color: colors[0] } );
-
-var xOffset = -1 * (songData.duration * 1.3 / 2);
-var yOffset = -1 * ((songData.tracks.length * 2.2) / 2);
-
-var rotationAngle = ((Math.PI*2)/songData.tracks.length);
-var circleRadius = 20;
-
-var spheres = [];
+var highlightMaterial = new THREE.MeshBasicMaterial( { color: 0xffffff } );
 
 var lineMaterial = new THREE.LineBasicMaterial({
     color: 0x444444, linewidth: 3
 });
 
 
+var stretchMultiplier = 1.3;
+var xOffset = -1 * (songData.duration * stretchMultiplier / 2);
+var yOffset = -1 * ((songData.tracks.length * 2.2) / 2);
+
+var rotationAngle = ((Math.PI*2)/songData.tracks.length);
+var circleRadius = 20;
+
+var rotationRatio = (1/20);
+
+var spheres = [];
+
 function drawSpheres() {
+
+  //iterate over every track in the song
   for( var i=0; i<songData.tracks.length; i++) {
     var clips = songData.tracks[i].clips;
-    var trackHeight = i * 2.2;
     console.log(songData.tracks[i].name);
 
-    var material = new THREE.MeshBasicMaterial( { color: colors[i % 5] } );
+    var material = new THREE.MeshBasicMaterial( { color: dnaColors[i % 5] } );
     radiusOffset = (Math.random()*10);
 
+    //iterate over every clip in the track
     for( var j=0; j<clips.length; j++ ) {
-      var clipObject = clips[j];
 
+      var clipObject = clips[j];
       var clipLength = clipObject.end - clipObject.start;
       
+      //draw a chain of spheres and lines for each clip
       for( var k=0; k<clipLength; k++ ) {
-        //var geometry = new THREE.BoxGeometry( 1,2,2 );
-        var geometry = new THREE.SphereGeometry( 0.7, 8, 8 );
-        var sphere = new THREE.Mesh( geometry, material );
 
-        var yPosition = Math.sin((rotationAngle * i) + (clipObject.start + k)/20) * (circleRadius + radiusOffset);
-        var zPosition = Math.cos((rotationAngle * i) + (clipObject.start + k)/20) * (circleRadius + radiusOffset);
+        var yPosition = Math.sin((rotationAngle * i) + (clipObject.start + k) * rotationRatio) * (circleRadius + radiusOffset);
+        var zPosition = Math.cos((rotationAngle * i) + (clipObject.start + k) * rotationRatio) * (circleRadius + radiusOffset);
         
-        sphere.position.set( xOffset + (clipObject.start + k) * 1.3 , yPosition, zPosition );
+        var sphere_geometry = new THREE.SphereGeometry( 0.7, 8, 8 );
+        var sphere = new THREE.Mesh( sphere_geometry, material );
+        sphere.position.set( xOffset + (clipObject.start + k) * stretchMultiplier , yPosition, zPosition );
 
-        var geometry = new THREE.Geometry();
-        geometry.vertices.push(new THREE.Vector3( xOffset + (clipObject.start + k) * 1.3 , yPosition, zPosition ));
-        geometry.vertices.push(new THREE.Vector3( xOffset + (clipObject.start + k) *1.3 , 0, 0));
-
-        var line = new THREE.Line(geometry, lineMaterial);
+        var line_geometry = new THREE.Geometry();
+        line_geometry.vertices.push(new THREE.Vector3( (clipObject.start + k) * stretchMultiplier + xOffset, yPosition, zPosition ));
+        line_geometry.vertices.push(new THREE.Vector3( (clipObject.start + k) * stretchMultiplier + xOffset, 0, 0));
+        var line = new THREE.Line(line_geometry, lineMaterial);
 
         scene.add(line);
-        scene.add( sphere );
+        scene.add(sphere);
 
         spheres.push(sphere);
       }
@@ -76,32 +80,21 @@ function drawSpheres() {
   }
 };
 
-function updateSpheres() { 
-  
-  for(var i=0; i<spheres.length; i++) {
- 
-    sphere = spheres[i]; 
- 
-    //sphere.rotation.x +=  0.1;
-
-  }
- 
-};
+//TODO: Render waveform for real
 
 function addWaveform() {
   for ( var i=0; i<songData.duration; i++ ) {
     waveformHeight = (Math.random()*10);
     var geometry = new THREE.CylinderGeometry( waveformHeight, waveformHeight, 1, 32 );
-    var material = new THREE.MeshBasicMaterial( {color: darkColors[i % 3]} );
+    var material = new THREE.MeshBasicMaterial( {color: waveformColors[i % 3]} );
     var cylinder = new THREE.Mesh( geometry, material );
     cylinder.rotation.z = Math.PI/2
-    cylinder.position.set( xOffset+(i*1.3), 0,0);
+    cylinder.position.set( xOffset+(i*stretchMultiplier), 0,0);
     scene.add( cylinder );
   }
 };
 
 var render = function () {
-  updateSpheres();
   requestAnimationFrame( render );
   renderer.render(scene, camera);
 };
@@ -111,3 +104,21 @@ var xAxis = new THREE.Vector3(1, 0, 0);
 addWaveform();
 drawSpheres();
 render();
+
+//animate();
+
+// var timeCounter = 0;
+// function animate() {
+//   console.log("trigger");
+
+//   for(var i=0; i<spheres.length; i++) {
+
+//     sphere = spheres[i]; 
+
+//     if (Math.floor(sphere.position.x) == Math.floor(timeCounter)) {
+//       sphere.material = highlightMaterial;
+//     }
+
+//   }
+//   timeCounter++;
+// };
