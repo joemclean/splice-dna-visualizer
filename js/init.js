@@ -32,6 +32,10 @@ var circleRadius = 20;
 
 var spheres = [];
 
+var lineMaterial = new THREE.LineBasicMaterial({
+    color: 0x444444, linewidth: 3
+});
+
 
 function drawSpheres() {
   for( var i=0; i<songData.tracks.length; i++) {
@@ -56,8 +60,14 @@ function drawSpheres() {
         var zPosition = Math.cos((rotationAngle * i) + (clipObject.start + k)/20) * (circleRadius + radiusOffset);
         
         sphere.position.set( xOffset + (clipObject.start + k) * 1.3 , yPosition, zPosition );
-        sphere.rotation.x = rotationAngle *  -i;
 
+        var geometry = new THREE.Geometry();
+        geometry.vertices.push(new THREE.Vector3( xOffset + (clipObject.start + k) * 1.3 , yPosition, zPosition ));
+        geometry.vertices.push(new THREE.Vector3( xOffset + (clipObject.start + k) *1.3 , 0, 0));
+
+        var line = new THREE.Line(geometry, lineMaterial);
+
+        scene.add(line);
         scene.add( sphere );
 
         spheres.push(sphere);
