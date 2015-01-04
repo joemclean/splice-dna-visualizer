@@ -25,7 +25,7 @@ var waveformColors = [
 var highlightMaterial = new THREE.MeshBasicMaterial( { color: 0xffffff } );
 
 var lineMaterial = new THREE.LineBasicMaterial({
-    color: 0x444444, linewidth: 3
+    color: 0x444444, linewidth: 2
 });
 
 
@@ -59,8 +59,8 @@ function drawSpheres() {
       //draw a chain of spheres and lines for each clip
       for( var k=0; k<clipLength; k++ ) {
 
-        var yPosition = Math.sin((rotationAngle * i) + (clipObject.start + k) * rotationRatio) * (circleRadius + radiusOffset);
-        var zPosition = Math.cos((rotationAngle * i) + (clipObject.start + k) * rotationRatio) * (circleRadius + radiusOffset);
+        var yPosition = (Math.sin((rotationAngle * i) + (clipObject.start + k) * rotationRatio)) * (circleRadius + radiusOffset);
+        var zPosition = (Math.cos((rotationAngle * i) + (clipObject.start + k) * rotationRatio)) * (circleRadius + radiusOffset);
         
         var sphere_geometry = new THREE.SphereGeometry( 0.7, 8, 8 );
         var sphere = new THREE.Mesh( sphere_geometry, material );
@@ -104,21 +104,24 @@ var xAxis = new THREE.Vector3(1, 0, 0);
 addWaveform();
 drawSpheres();
 render();
+//changeColor();
 
-//animate();
+function changeColor() {
+  nIntervId = setInterval(animate, 100);
+}
 
-// var timeCounter = 0;
-// function animate() {
-//   console.log("trigger");
+var xCounter = xOffset;
+function animate() {
+  console.log("trigger");
 
-//   for(var i=0; i<spheres.length; i++) {
+  for(var i=0; i<spheres.length; i++) {
 
-//     sphere = spheres[i]; 
+    sphere = spheres[i]; 
 
-//     if (Math.floor(sphere.position.x) == Math.floor(timeCounter)) {
-//       sphere.material = highlightMaterial;
-//     }
+    if (Math.floor(sphere.position.x) == Math.floor(xCounter)) {
+      sphere.material = highlightMaterial;
+    }
 
-//   }
-//   timeCounter++;
-// };
+  }
+  xCounter = xCounter + 1;
+};
