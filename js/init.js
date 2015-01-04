@@ -40,6 +40,11 @@ var rotationRatio = (1/20);
 
 var spheres = [];
 
+var DnaSphere = function(defaultColor, sphere){
+  this.defaultColor = defaultColor;
+  this.sphere = sphere;
+};
+
 function drawSpheres() {
 
   //iterate over every track in the song
@@ -66,6 +71,8 @@ function drawSpheres() {
         var sphere = new THREE.Mesh( sphere_geometry, material );
         sphere.position.set( xOffset + (clipObject.start + k) * stretchMultiplier , yPosition, zPosition );
 
+        var dnaSphere = new DnaSphere(material, sphere);
+
         var line_geometry = new THREE.Geometry();
         line_geometry.vertices.push(new THREE.Vector3( (clipObject.start + k) * stretchMultiplier + xOffset, yPosition, zPosition ));
         line_geometry.vertices.push(new THREE.Vector3( (clipObject.start + k) * stretchMultiplier + xOffset, 0, 0));
@@ -74,7 +81,7 @@ function drawSpheres() {
         scene.add(line);
         scene.add(sphere);
 
-        spheres.push(sphere);
+        spheres.push(dnaSphere);
       }
     }
   }
@@ -104,24 +111,51 @@ var xAxis = new THREE.Vector3(1, 0, 0);
 addWaveform();
 drawSpheres();
 render();
-//changeColor();
+changeColor();
 
 function changeColor() {
   nIntervId = setInterval(animate, 100);
 }
 
-var xCounter = xOffset;
+
+var xCounter = 0;
 function animate() {
   console.log("trigger");
 
   for(var i=0; i<spheres.length; i++) {
 
-    sphere = spheres[i]; 
+    dnaSphere = spheres[i]; 
 
-    if (Math.floor(sphere.position.x) == Math.floor(xCounter)) {
-      sphere.material = highlightMaterial;
+    if (Math.floor(dnaSphere.sphere.position.x - xOffset) % 6 == xCounter) {
+      dnaSphere.sphere.material = highlightMaterial;
+    } else {
+      dnaSphere.sphere.material = dnaSphere.defaultColor;
     }
 
   }
   xCounter = xCounter + 1;
+  if (xCounter > 5) {
+    xCounter = 0;
+  };
 };
+
+// var xCounter = xOffset;
+// function animate() {
+//   console.log("trigger");
+
+//   for(var i=0; i<spheres.length; i++) {
+
+//     dnaSphere = spheres[i]; 
+
+//     if (Math.floor(dnaSphere.sphere.position.x) == Math.floor(xCounter)) {
+//       dnaSphere.sphere.material = highlightMaterial;
+//     } else {
+//       dnaSphere.sphere.material = dnaSphere.defaultColor;
+//     }
+
+//   }
+//   xCounter = xCounter + 1;
+//   if (xCounter > -1*(xOffset) {
+//     xCounter = xOffset;
+//   };
+// };
