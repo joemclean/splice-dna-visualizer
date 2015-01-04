@@ -9,12 +9,21 @@ camera.position.z = 120;
 controls = new THREE.OrbitControls( camera, renderer.domElement );
 
 var dnaColors = [
-  0x3f3854,
-  0x25b79b,
-  0x497ed6,
-  0xff9500,
-  0x15ba31
+  0x3f3854, //purple
+  0x25b79b, //teal
+  0x497ed6, //blue
+  0xff9500, //yellow
+  0x15ba31  //green
 ];
+
+var dnaDarkColors = [
+  0x322d47,
+  0x0ca386,
+  0x426ba8,
+  0xcf7528,
+  0x21a540
+];
+
 
 var waveformColors = [
   0x202020,
@@ -23,9 +32,14 @@ var waveformColors = [
 ];
 
 var highlightMaterial = new THREE.MeshBasicMaterial( { color: 0xffffff } );
+var highlightDarkMaterial = new THREE.MeshBasicMaterial( { color: 0xdddddd } );
 
 var lineMaterial = new THREE.LineBasicMaterial({
     color: 0x444444, linewidth: 2
+});
+
+var lineHighlightMaterial = new THREE.LineBasicMaterial({
+    color: 0x777777, linewidth: 2
 });
 
 
@@ -40,9 +54,33 @@ var rotationRatio = (1/20);
 
 var spheres = [];
 
-var DnaSphere = function(defaultColor, sphere){
-  this.defaultColor = defaultColor;
+
+window.onload = function() {
+
+  var playButton = document.getElementById("play-button");
+  var stopButton = document.getElementById("stop-button");
+
+  //Set code to run when the link is clicked
+  // by assigning a function to "onclick"
+  playButton.onclick = function() {
+    initiatePlay();
+    return false;
+  }
+
+  stopButton.onclick = function() {
+    stopPlay();
+    return false;
+  }
+}
+
+
+
+var DnaSphere = function(dnaColor, dnaDarkColor, sphere, line){
+  this.dnaColor = dnaColor;
+  this.dnaDarkColor = dnaDarkColor;
   this.sphere = sphere;
+  this.line = line;
+  this.elapsed = 0;
 };
 
 function drawSpheres() {
@@ -52,7 +90,8 @@ function drawSpheres() {
     var clips = songData.tracks[i].clips;
     console.log(songData.tracks[i].name);
 
-    var material = new THREE.MeshBasicMaterial( { color: dnaColors[i % 5] } );
+    var dnaColor = new THREE.MeshBasicMaterial( { color: dnaColors[i % 5] } );
+    var dnaDarkColor = new THREE.MeshBasicMaterial( { color: dnaDarkColors[i % 5] } );
     radiusOffset = (Math.random()*10);
 
     //iterate over every clip in the track
@@ -68,15 +107,15 @@ function drawSpheres() {
         var zPosition = (Math.cos((rotationAngle * i) + (clipObject.start + k) * rotationRatio)) * (circleRadius + radiusOffset);
         
         var sphere_geometry = new THREE.SphereGeometry( 0.7, 8, 8 );
-        var sphere = new THREE.Mesh( sphere_geometry, material );
+        var sphere = new THREE.Mesh( sphere_geometry, dnaColor );
         sphere.position.set( xOffset + (clipObject.start + k) * stretchMultiplier , yPosition, zPosition );
-
-        var dnaSphere = new DnaSphere(material, sphere);
 
         var line_geometry = new THREE.Geometry();
         line_geometry.vertices.push(new THREE.Vector3( (clipObject.start + k) * stretchMultiplier + xOffset, yPosition, zPosition ));
         line_geometry.vertices.push(new THREE.Vector3( (clipObject.start + k) * stretchMultiplier + xOffset, 0, 0));
         var line = new THREE.Line(line_geometry, lineMaterial);
+
+        var dnaSphere = new DnaSphere(dnaColor, dnaDarkColor, sphere, line);
 
         scene.add(line);
         scene.add(sphere);
@@ -111,51 +150,83 @@ var xAxis = new THREE.Vector3(1, 0, 0);
 addWaveform();
 drawSpheres();
 render();
-changeColor();
+initiateChasers();
+//initiatePlay();
 
-function changeColor() {
-  nIntervId = setInterval(animate, 100);
+function initiateChasers() {
+  chaseInterval = setInterval(animate, 100);
 }
 
+function initiatePlay() {
+  document.getElementById('bounce').currentTime = 0;
+  document.getElementById('bounce').play();
+  playInterval = setInterval(updateTrackLocation, 100);
+}
 
-var xCounter = 0;
+var chaserCounter = 0;
 function animate() {
-  console.log("trigger");
 
   for(var i=0; i<spheres.length; i++) {
 
     dnaSphere = spheres[i]; 
 
-    if (Math.floor(dnaSphere.sphere.position.x - xOffset) % 6 == xCounter) {
+    if ((Math.floor(dnaSphere.sphere.position.x - xOffset) % 6 == chaserCounter) && dnaSphere.elapsed == 0) {
+      dnaSphere.sphere.material = dnaSphere.dnaDarkColor;
+    } else if (dnaSphere.elapsed == 0) {
+      dnaSphere.sphere.material = dnaSphere.dnaColor;
+    }
+  }
+
+  chaserCounter++;
+  if (chaserCounter > 5) {
+    chaserCounter = 0;
+  };
+
+};
+
+var xCounter = xOffset;
+function updateTrackLocation() {
+
+  for(var i=0; i<spheres.length; i++) {
+
+    dnaSphere = spheres[i]; 
+    if (dnaSphere.elapsed == 0 && Math.floor(dnaSphere.sphere.position.x) == Math.floor(xCounter)) {
+      dnaSphere.elapsed = 1;
       dnaSphere.sphere.material = highlightMaterial;
-    } else {
-      dnaSphere.sphere.material = dnaSphere.defaultColor;
+      dnaSphere.line.material = lineHighlightMaterial;
+      console.log("dnaSphere.sphere.elapsed");
     }
 
   }
-  xCounter = xCounter + 1;
-  if (xCounter > 5) {
-    xCounter = 0;
+  if (xCounter < -1*(xOffset)) {
+    xCounter = xCounter + 0.1;
   };
 };
 
-// var xCounter = xOffset;
-// function animate() {
-//   console.log("trigger");
+function stopPlay() {
+  document.getElementById('bounce').pause();
+  clearInterval(playInterval);
+  for(var i=0; i<spheres.length; i++) {
+    dnaSphere = spheres[i];
+    dnaSphere.elapsed = 0;
+    dnaSphere.sphere.material = dnaSphere.dnaColor;
+    dnaSphere.line.material = lineMaterial;
+  }
+  xCounter = xOffset;
+}
 
-//   for(var i=0; i<spheres.length; i++) {
 
-//     dnaSphere = spheres[i]; 
 
-//     if (Math.floor(dnaSphere.sphere.position.x) == Math.floor(xCounter)) {
-//       dnaSphere.sphere.material = highlightMaterial;
-//     } else {
-//       dnaSphere.sphere.material = dnaSphere.defaultColor;
-//     }
 
-//   }
-//   xCounter = xCounter + 1;
-//   if (xCounter > -1*(xOffset) {
-//     xCounter = xOffset;
-//   };
-// };
+
+// $("#johnny_button").click(function(){
+//     document.getElementById('hallway').pause();
+//     $("#johnny_image").animate({marginTop:"+=1000px"});
+//     document.getElementById('aah').currentTime = 0;
+//     document.getElementById('aah').play();
+//   });
+
+//   $("#johnny_image").click(function(){
+//     document.getElementById('hallway').currentTime = 0;
+//     document.getElementById('hallway').play();
+//   });
