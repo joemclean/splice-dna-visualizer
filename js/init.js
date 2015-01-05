@@ -52,8 +52,7 @@ var circleRadius = 20;
 
 var rotationRatio = (1/20);
 
-var spheres = [];
-
+var dnaNodes = [];
 
 window.onload = function() {
 
@@ -74,8 +73,6 @@ window.onload = function() {
     return false;
   }
 }
-
-
 
 var DnaNode = function(time, defaultMaterial, darkMaterial, sphere, line){
   var self = this;
@@ -107,7 +104,7 @@ var DnaNode = function(time, defaultMaterial, darkMaterial, sphere, line){
 };
 
 
-function drawSpheres() {
+function drawDnaNodes() {
 
   //iterate over every track in the song
   for( var i=0; i<songData.tracks.length; i++) {
@@ -124,7 +121,7 @@ function drawSpheres() {
       var clipObject = clips[j];
       var clipLength = clipObject.end - clipObject.start;
       
-      //draw a chain of spheres and lines for each clip
+      //draw a chain of dnaNodes (sphere + line) for each clip
       for( var k=0; k<clipLength; k++ ) {
 
         nodeTime = clipObject.start + k;
@@ -147,7 +144,7 @@ function drawSpheres() {
         scene.add(line);
         scene.add(sphere);
 
-        spheres.push(dnaNode);
+        dnaNodes.push(dnaNode);
       }
     }
   }
@@ -167,17 +164,38 @@ function addWaveform() {
   }
 };
 
-var render = function () {
-  requestAnimationFrame( render );
-  renderer.render(scene, camera);
+function initiatePlay() {
+  document.getElementById('bounce').currentTime = 0;
+  document.getElementById('bounce').play();
+  playInterval = setInterval(updateTrackLocation, 100);
+}
+
+
+function stopPlay() {
+  document.getElementById('bounce').pause();
+  clearInterval(playInterval);
+  for(var i=0; i<dnaNodes.length; i++) {
+    dnaNode = dnaNodes[i];
+    dnaNode.elapsed = 0;
+    dnaNode.unhighlight();
+  }
+  xCounter = xOffset;
+}
+
+function updateTrackLocation() {
+  updateDnaNodes(bounce.currentTime);
 };
 
-var xAxis = new THREE.Vector3(1, 0, 0);
-
-addWaveform();
-drawSpheres();
-render();
-initiateChasers();
+function updateDnaNodes(elapsedTime) {
+  console.log(elapsedTime);
+  for(var i=0; i<dnaNodes.length; i++) {
+    dnaNode = dnaNodes[i]; 
+    if (dnaNode.elapsed == 0 && Math.floor(dnaNode.nodeTime) == Math.floor(elapsedTime)) {
+      dnaNode.elapsed = 1;
+      dnaNode.highlight();
+    }
+  };
+};
 
 function initiateChasers() {
   chaseInterval = setInterval(chase, 100);
@@ -185,8 +203,8 @@ function initiateChasers() {
 
 var chaserCounter = 0;
 function chase() {
-  for(var i=0; i<spheres.length; i++) {
-    dnaNode = spheres[i]; 
+  for(var i=0; i<dnaNodes.length; i++) {
+    dnaNode = dnaNodes[i]; 
     if ((Math.floor(dnaNode.sphere.position.x - xOffset) % 6 == chaserCounter) && dnaNode.elapsed == 0) {
       dnaNode.chaseOn();
     } else if (dnaNode.elapsed == 0) {
@@ -200,42 +218,13 @@ function chase() {
 };
 
 
-function updateDnaNodes(elapsedTime) {
-  console.log(elapsedTime);
-  for(var i=0; i<spheres.length; i++) {
-    dnaNode = spheres[i]; 
-    if (dnaNode.elapsed == 0 && Math.floor(dnaNode.nodeTime) == Math.floor(elapsedTime)) {
-      dnaNode.elapsed = 1;
-      dnaNode.highlight();
-    }
-  };
+
+var render = function () {
+  requestAnimationFrame( render );
+  renderer.render(scene, camera);
 };
 
-
-var xCounter = xOffset;
-var elapsedTime = 0;
-function updateTrackLocation() {
-  updateDnaNodes(bounce.currentTime);
-  if (xCounter < -1*(xOffset)) {
-    xCounter = xCounter + 0.1;
-  };
-};
-
-
-function initiatePlay() {
-  document.getElementById('bounce').currentTime = 0;
-  document.getElementById('bounce').play();
-  playInterval = setInterval(updateTrackLocation, 100);
-}
-
-
-function stopPlay() {
-  document.getElementById('bounce').pause();
-  clearInterval(playInterval);
-  for(var i=0; i<spheres.length; i++) {
-    dnaNode = spheres[i];
-    dnaNode.elapsed = 0;
-    dnaNode.unhighlight();
-  }
-  xCounter = xOffset;
-}
+addWaveform();
+render();
+drawDnaNodes();
+initiateChasers();
