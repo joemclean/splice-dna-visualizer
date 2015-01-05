@@ -31,6 +31,7 @@ var waveformColors = [
   0x262626
 ];
 
+var discDefaultMaterial = new THREE.MeshBasicMaterial( { color: 0x202020 } );
 var highlightMaterial = new THREE.MeshBasicMaterial( { color: 0xffffff } );
 var highlightDarkMaterial = new THREE.MeshBasicMaterial( { color: 0xdddddd } );
 
@@ -109,12 +110,14 @@ var Waveform = function(bounce) {
   this.waveformDiscs = [];
   this.bounce = bounce;
 
+  //TODO render waveform for real (it's a mockup now)
   this.build = function(){
     for ( var i=0; i<songData.duration; i++ ) {
       waveformHeight = (Math.random()*10);
       var geometry = new THREE.CylinderGeometry( waveformHeight, waveformHeight, 1, 32 );
-      var material = new THREE.MeshBasicMaterial( {color: waveformColors[i % 3]} );
-      var waveformDisc = new THREE.Mesh( geometry, material );
+      //TODO: bring this back
+      //var material = new THREE.MeshBasicMaterial( {color: waveformColors[i % 3]} );
+      var waveformDisc = new THREE.Mesh( geometry, discDefaultMaterial );
       waveformDisc.rotation.z = Math.PI/2
       waveformDisc.position.set( (i*stretchMultiplier) + xOffset, 0,0);
       scene.add( waveformDisc );
@@ -124,8 +127,12 @@ var Waveform = function(bounce) {
 
   this.update = function(){
     for ( var i=0; i<self.waveformDiscs.length; i++) {
-      if (Math.floor((waveformDisc.position.x/stretchMultiplier) - xOffset) == Math.floor(self.bounce.currentTime)) {
+      waveformDisc = self.waveformDiscs[i];
+      //TODO: clean this up
+      if (self.bounce.currentTime > 0 && Math.floor((waveformDisc.position.x/stretchMultiplier) + songData.duration/2) < self.bounce.currentTime) {
         waveformDisc.material = highlightMaterial;
+      } else {
+        waveformDisc.material = discDefaultMaterial;
       }
     }
   };
@@ -180,18 +187,20 @@ function drawDnaNodes() {
   }
 };
 
-//TODO: Render waveform for real
+//TODO: smarter play w/ pause
 
 function initiatePlay() {
-  document.getElementById('bounce').currentTime = 0;
-  document.getElementById('bounce').play();
+  bounce.currentTime = 0;
+  bounce.play();
   playInterval = setInterval(updateTrackLocation, 100);
 }
 
 
 function stopPlay() {
-  document.getElementById('bounce').pause();
+  bounce.pause();
+  bounce.currentTime = 0;
   clearInterval(playInterval);
+  waveform.update();
   for(var i=0; i<dnaNodes.length; i++) {
     dnaNode = dnaNodes[i];
     dnaNode.elapsed = 0;
@@ -202,7 +211,7 @@ function stopPlay() {
 
 function updateTrackLocation() {
   updateDnaNodes(bounce.currentTime);
-  waveform.update;
+  waveform.update();
 };
 
 function updateDnaNodes(elapsedTime) {
@@ -243,8 +252,8 @@ var render = function () {
   renderer.render(scene, camera);
 };
 
-waveform = new Waveform;
-waveform.build;
+waveform = new Waveform(bounce);
+waveform.build();
 render();
 drawDnaNodes();
 initiateChasers();
