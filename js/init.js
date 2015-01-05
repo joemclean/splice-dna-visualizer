@@ -8,7 +8,7 @@ document.body.appendChild( renderer.domElement );
 camera.position.z = 120;
 controls = new THREE.OrbitControls( camera, renderer.domElement );
 
-var dnaColors = [
+var defaultMaterials = [
   0x3f3854, //purple
   0x25b79b, //teal
   0x497ed6, //blue
@@ -16,7 +16,7 @@ var dnaColors = [
   0x15ba31  //green
 ];
 
-var dnaDarkColors = [
+var darkMaterials = [
   0x322d47,
   0x0ca386,
   0x426ba8,
@@ -35,11 +35,11 @@ var highlightMaterial = new THREE.MeshBasicMaterial( { color: 0xffffff } );
 var highlightDarkMaterial = new THREE.MeshBasicMaterial( { color: 0xdddddd } );
 
 var lineMaterial = new THREE.LineBasicMaterial({
-    color: 0x444444, linewidth: 2
+  color: 0x444444, linewidth: 2
 });
 
 var lineHighlightMaterial = new THREE.LineBasicMaterial({
-    color: 0x777777, linewidth: 2
+  color: 0x777777, linewidth: 2
 });
 
 
@@ -75,9 +75,9 @@ window.onload = function() {
 
 
 
-var DnaSphere = function(dnaColor, dnaDarkColor, sphere, line){
-  this.dnaColor = dnaColor;
-  this.dnaDarkColor = dnaDarkColor;
+var DnaNode = function(defaultMaterial, darkMaterial, sphere, line){
+  this.defaultMaterial = defaultMaterial;
+  this.darkMaterial = darkMaterial;
   this.sphere = sphere;
   this.line = line;
   this.elapsed = 0;
@@ -90,8 +90,8 @@ function drawSpheres() {
     var clips = songData.tracks[i].clips;
     console.log(songData.tracks[i].name);
 
-    var dnaColor = new THREE.MeshBasicMaterial( { color: dnaColors[i % 5] } );
-    var dnaDarkColor = new THREE.MeshBasicMaterial( { color: dnaDarkColors[i % 5] } );
+    var defaultMaterial = new THREE.MeshBasicMaterial( { color: defaultMaterials[i % 5] } );
+    var darkMaterial = new THREE.MeshBasicMaterial( { color: darkMaterials[i % 5] } );
     radiusOffset = (Math.random()*10);
 
     //iterate over every clip in the track
@@ -107,7 +107,7 @@ function drawSpheres() {
         var zPosition = (Math.cos((rotationAngle * i) + (clipObject.start + k) * rotationRatio)) * (circleRadius + radiusOffset);
         
         var sphere_geometry = new THREE.SphereGeometry( 0.7, 8, 8 );
-        var sphere = new THREE.Mesh( sphere_geometry, dnaColor );
+        var sphere = new THREE.Mesh( sphere_geometry, defaultMaterial );
         sphere.position.set( xOffset + (clipObject.start + k) * stretchMultiplier , yPosition, zPosition );
 
         var line_geometry = new THREE.Geometry();
@@ -115,12 +115,12 @@ function drawSpheres() {
         line_geometry.vertices.push(new THREE.Vector3( (clipObject.start + k) * stretchMultiplier + xOffset, 0, 0));
         var line = new THREE.Line(line_geometry, lineMaterial);
 
-        var dnaSphere = new DnaSphere(dnaColor, dnaDarkColor, sphere, line);
+        var dnaNode = new DnaNode(defaultMaterial, darkMaterial, sphere, line);
 
         scene.add(line);
         scene.add(sphere);
 
-        spheres.push(dnaSphere);
+        spheres.push(dnaNode);
       }
     }
   }
@@ -168,12 +168,12 @@ function animate() {
 
   for(var i=0; i<spheres.length; i++) {
 
-    dnaSphere = spheres[i]; 
+    dnaNode = spheres[i]; 
 
-    if ((Math.floor(dnaSphere.sphere.position.x - xOffset) % 6 == chaserCounter) && dnaSphere.elapsed == 0) {
-      dnaSphere.sphere.material = dnaSphere.dnaDarkColor;
-    } else if (dnaSphere.elapsed == 0) {
-      dnaSphere.sphere.material = dnaSphere.dnaColor;
+    if ((Math.floor(dnaNode.sphere.position.x - xOffset) % 6 == chaserCounter) && dnaNode.elapsed == 0) {
+      dnaNode.sphere.material = dnaNode.darkMaterial;
+    } else if (dnaNode.elapsed == 0) {
+      dnaNode.sphere.material = dnaNode.defaultMaterial;
     }
   }
 
@@ -189,12 +189,12 @@ function updateTrackLocation() {
 
   for(var i=0; i<spheres.length; i++) {
 
-    dnaSphere = spheres[i]; 
-    if (dnaSphere.elapsed == 0 && Math.floor(dnaSphere.sphere.position.x) == Math.floor(xCounter)) {
-      dnaSphere.elapsed = 1;
-      dnaSphere.sphere.material = highlightMaterial;
-      dnaSphere.line.material = lineHighlightMaterial;
-      console.log("dnaSphere.sphere.elapsed");
+    dnaNode = spheres[i]; 
+    if (dnaNode.elapsed == 0 && Math.floor(dnaNode.sphere.position.x) == Math.floor(xCounter)) {
+      dnaNode.elapsed = 1;
+      dnaNode.sphere.material = highlightMaterial;
+      dnaNode.line.material = lineHighlightMaterial;
+      console.log("dnaNode.sphere.elapsed");
     }
 
   }
@@ -207,26 +207,10 @@ function stopPlay() {
   document.getElementById('bounce').pause();
   clearInterval(playInterval);
   for(var i=0; i<spheres.length; i++) {
-    dnaSphere = spheres[i];
-    dnaSphere.elapsed = 0;
-    dnaSphere.sphere.material = dnaSphere.dnaColor;
-    dnaSphere.line.material = lineMaterial;
+    dnaNode = spheres[i];
+    dnaNode.elapsed = 0;
+    dnaNode.sphere.material = dnaNode.defaultMaterial;
+    dnaNode.line.material = lineMaterial;
   }
   xCounter = xOffset;
 }
-
-
-
-
-
-// $("#johnny_button").click(function(){
-//     document.getElementById('hallway').pause();
-//     $("#johnny_image").animate({marginTop:"+=1000px"});
-//     document.getElementById('aah').currentTime = 0;
-//     document.getElementById('aah').play();
-//   });
-
-//   $("#johnny_image").click(function(){
-//     document.getElementById('hallway').currentTime = 0;
-//     document.getElementById('hallway').play();
-//   });
