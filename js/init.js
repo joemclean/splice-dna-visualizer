@@ -103,6 +103,36 @@ var DnaNode = function(time, defaultMaterial, darkMaterial, sphere, line){
   };
 };
 
+var Waveform = function(bounce) {
+  var self = this;
+
+  this.waveformDiscs = [];
+  this.bounce = bounce;
+
+  this.build = function(){
+    for ( var i=0; i<songData.duration; i++ ) {
+      waveformHeight = (Math.random()*10);
+      var geometry = new THREE.CylinderGeometry( waveformHeight, waveformHeight, 1, 32 );
+      var material = new THREE.MeshBasicMaterial( {color: waveformColors[i % 3]} );
+      var waveformDisc = new THREE.Mesh( geometry, material );
+      waveformDisc.rotation.z = Math.PI/2
+      waveformDisc.position.set( (i*stretchMultiplier) + xOffset, 0,0);
+      scene.add( waveformDisc );
+      self.waveformDiscs.push(waveformDisc);
+    }
+  }
+
+  this.update = function(){
+    for ( var i=0; i<self.waveformDiscs.length; i++) {
+      if (Math.floor((waveformDisc.position.x/stretchMultiplier) - xOffset) == Math.floor(self.bounce.currentTime)) {
+        waveformDisc.material = highlightMaterial;
+      }
+    }
+  };
+
+}
+
+
 
 function drawDnaNodes() {
 
@@ -152,18 +182,6 @@ function drawDnaNodes() {
 
 //TODO: Render waveform for real
 
-function addWaveform() {
-  for ( var i=0; i<songData.duration; i++ ) {
-    waveformHeight = (Math.random()*10);
-    var geometry = new THREE.CylinderGeometry( waveformHeight, waveformHeight, 1, 32 );
-    var material = new THREE.MeshBasicMaterial( {color: waveformColors[i % 3]} );
-    var cylinder = new THREE.Mesh( geometry, material );
-    cylinder.rotation.z = Math.PI/2
-    cylinder.position.set( xOffset+(i*stretchMultiplier), 0,0);
-    scene.add( cylinder );
-  }
-};
-
 function initiatePlay() {
   document.getElementById('bounce').currentTime = 0;
   document.getElementById('bounce').play();
@@ -184,6 +202,7 @@ function stopPlay() {
 
 function updateTrackLocation() {
   updateDnaNodes(bounce.currentTime);
+  waveform.update;
 };
 
 function updateDnaNodes(elapsedTime) {
@@ -224,7 +243,8 @@ var render = function () {
   renderer.render(scene, camera);
 };
 
-addWaveform();
+waveform = new Waveform;
+waveform.build;
 render();
 drawDnaNodes();
 initiateChasers();
