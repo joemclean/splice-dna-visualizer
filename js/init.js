@@ -31,16 +31,16 @@ var waveformColors = [
   0x262626
 ];
 
-var discDefaultMaterial = new THREE.MeshBasicMaterial( { color: 0x202020 } );
+var discDefaultMaterial = new THREE.MeshBasicMaterial( { color: 0x333333 } );
 var highlightMaterial = new THREE.MeshBasicMaterial( { color: 0xffffff } );
 var highlightDarkMaterial = new THREE.MeshBasicMaterial( { color: 0xdddddd } );
 
 var lineMaterial = new THREE.LineBasicMaterial({
-  color: 0x444444, linewidth: 2
+  color: 0x222222, linewidth: 0.1
 });
 
 var lineHighlightMaterial = new THREE.LineBasicMaterial({
-  color: 0x777777, linewidth: 2
+  color: 0x666666, linewidth: 1
 });
 
 
@@ -162,6 +162,8 @@ function drawDnaNodes() {
       for( var k=0; k<clipLength; k++ ) {
 
         nodeTime = clipObject.start + k;
+
+        //radiusOffset = (Math.random()*10);
 
         var xPosition = xOffset + (nodeTime * stretchMultiplier);
         var yPosition = (Math.sin((rotationAngle * i) + (nodeTime * rotationRatio))) * (circleRadius + radiusOffset);
