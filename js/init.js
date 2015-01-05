@@ -60,6 +60,8 @@ window.onload = function() {
   var playButton = document.getElementById("play-button");
   var stopButton = document.getElementById("stop-button");
 
+  var bounce = document.getElementById('bounce');
+
   //Set code to run when the link is clicked
   // by assigning a function to "onclick"
   playButton.onclick = function() {
@@ -75,13 +77,35 @@ window.onload = function() {
 
 
 
-var DnaNode = function(defaultMaterial, darkMaterial, sphere, line){
+var DnaNode = function(time, defaultMaterial, darkMaterial, sphere, line){
+  var self = this;
+
+  this.nodeTime = nodeTime;
   this.defaultMaterial = defaultMaterial;
   this.darkMaterial = darkMaterial;
   this.sphere = sphere;
   this.line = line;
   this.elapsed = 0;
+
+  this.highlight = function(){
+    self.sphere.material = highlightMaterial;
+    self.line.material = lineHighlightMaterial;
+  };
+
+  this.unhighlight = function(){
+    self.sphere.material = defaultMaterial;
+    self.line.material = lineMaterial;
+  };
+
+  this.chaseOn = function(){
+    self.sphere.material = darkMaterial;
+  };
+
+  this.chaseOff = function(){
+    self.sphere.material = defaultMaterial;
+  };
 };
+
 
 function drawSpheres() {
 
@@ -103,19 +127,22 @@ function drawSpheres() {
       //draw a chain of spheres and lines for each clip
       for( var k=0; k<clipLength; k++ ) {
 
-        var yPosition = (Math.sin((rotationAngle * i) + (clipObject.start + k) * rotationRatio)) * (circleRadius + radiusOffset);
-        var zPosition = (Math.cos((rotationAngle * i) + (clipObject.start + k) * rotationRatio)) * (circleRadius + radiusOffset);
+        nodeTime = clipObject.start + k;
+
+        var xPosition = xOffset + (nodeTime * stretchMultiplier);
+        var yPosition = (Math.sin((rotationAngle * i) + (nodeTime * rotationRatio))) * (circleRadius + radiusOffset);
+        var zPosition = (Math.cos((rotationAngle * i) + (nodeTime * rotationRatio))) * (circleRadius + radiusOffset);
         
         var sphere_geometry = new THREE.SphereGeometry( 0.7, 8, 8 );
         var sphere = new THREE.Mesh( sphere_geometry, defaultMaterial );
-        sphere.position.set( xOffset + (clipObject.start + k) * stretchMultiplier , yPosition, zPosition );
+        sphere.position.set( xPosition, yPosition, zPosition );
 
         var line_geometry = new THREE.Geometry();
         line_geometry.vertices.push(new THREE.Vector3( (clipObject.start + k) * stretchMultiplier + xOffset, yPosition, zPosition ));
         line_geometry.vertices.push(new THREE.Vector3( (clipObject.start + k) * stretchMultiplier + xOffset, 0, 0));
         var line = new THREE.Line(line_geometry, lineMaterial);
 
-        var dnaNode = new DnaNode(defaultMaterial, darkMaterial, sphere, line);
+        var dnaNode = new DnaNode(nodeTime, defaultMaterial, darkMaterial, sphere, line);
 
         scene.add(line);
         scene.add(sphere);
@@ -151,11 +178,49 @@ addWaveform();
 drawSpheres();
 render();
 initiateChasers();
-//initiatePlay();
 
 function initiateChasers() {
-  chaseInterval = setInterval(animate, 100);
+  chaseInterval = setInterval(chase, 100);
 }
+
+var chaserCounter = 0;
+function chase() {
+  for(var i=0; i<spheres.length; i++) {
+    dnaNode = spheres[i]; 
+    if ((Math.floor(dnaNode.sphere.position.x - xOffset) % 6 == chaserCounter) && dnaNode.elapsed == 0) {
+      dnaNode.chaseOn();
+    } else if (dnaNode.elapsed == 0) {
+      dnaNode.chaseOff();
+    }
+  }
+  chaserCounter++;
+  if (chaserCounter > 5) {
+    chaserCounter = 0;
+  };
+};
+
+
+function updateDnaNodes(elapsedTime) {
+  console.log(elapsedTime);
+  for(var i=0; i<spheres.length; i++) {
+    dnaNode = spheres[i]; 
+    if (dnaNode.elapsed == 0 && Math.floor(dnaNode.nodeTime) == Math.floor(elapsedTime)) {
+      dnaNode.elapsed = 1;
+      dnaNode.highlight();
+    }
+  };
+};
+
+
+var xCounter = xOffset;
+var elapsedTime = 0;
+function updateTrackLocation() {
+  updateDnaNodes(bounce.currentTime);
+  if (xCounter < -1*(xOffset)) {
+    xCounter = xCounter + 0.1;
+  };
+};
+
 
 function initiatePlay() {
   document.getElementById('bounce').currentTime = 0;
@@ -163,45 +228,6 @@ function initiatePlay() {
   playInterval = setInterval(updateTrackLocation, 100);
 }
 
-var chaserCounter = 0;
-function animate() {
-
-  for(var i=0; i<spheres.length; i++) {
-
-    dnaNode = spheres[i]; 
-
-    if ((Math.floor(dnaNode.sphere.position.x - xOffset) % 6 == chaserCounter) && dnaNode.elapsed == 0) {
-      dnaNode.sphere.material = dnaNode.darkMaterial;
-    } else if (dnaNode.elapsed == 0) {
-      dnaNode.sphere.material = dnaNode.defaultMaterial;
-    }
-  }
-
-  chaserCounter++;
-  if (chaserCounter > 5) {
-    chaserCounter = 0;
-  };
-
-};
-
-var xCounter = xOffset;
-function updateTrackLocation() {
-
-  for(var i=0; i<spheres.length; i++) {
-
-    dnaNode = spheres[i]; 
-    if (dnaNode.elapsed == 0 && Math.floor(dnaNode.sphere.position.x) == Math.floor(xCounter)) {
-      dnaNode.elapsed = 1;
-      dnaNode.sphere.material = highlightMaterial;
-      dnaNode.line.material = lineHighlightMaterial;
-      console.log("dnaNode.sphere.elapsed");
-    }
-
-  }
-  if (xCounter < -1*(xOffset)) {
-    xCounter = xCounter + 0.1;
-  };
-};
 
 function stopPlay() {
   document.getElementById('bounce').pause();
@@ -209,8 +235,7 @@ function stopPlay() {
   for(var i=0; i<spheres.length; i++) {
     dnaNode = spheres[i];
     dnaNode.elapsed = 0;
-    dnaNode.sphere.material = dnaNode.defaultMaterial;
-    dnaNode.line.material = lineMaterial;
+    dnaNode.unhighlight();
   }
   xCounter = xOffset;
 }
